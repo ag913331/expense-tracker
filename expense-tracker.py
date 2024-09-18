@@ -52,6 +52,20 @@ def update_expense(id: int, description: str = None, amount: float = None):
 
     save_data(expenses)
 
+def delete_expense(id: int):
+    expenses = load_data()
+    
+    expense_to_delete = next((expense for expense in expenses if expense["id"] == id))
+
+    if expense_to_delete is None:
+        print(f"Expense with ID {id} not found.")
+        return
+    
+    expenses = [expense for expense in expenses if expense["id"] != id]
+    save_data(expenses)
+
+    print("Expense deleted successfully")
+
 def is_number(s):
     try:
         float(s)
@@ -74,12 +88,15 @@ def main() -> None:
 
     add_expense_parser = subparsers.add_parser("add", help="Add expense related arguments")
     add_expense_parser.add_argument("-d", "--description", type=str, required=True, help="Expense description")
-    add_expense_parser.add_argument("-a", "--amount", type=str, required=True, help="Expense amount")
+    add_expense_parser.add_argument("-a", "--amount", type=float, required=True, help="Expense amount")
 
     update_expense_parser = subparsers.add_parser("update", help="Update expense related arguments")
     update_expense_parser.add_argument("--id", type=int, required=True, help="Expense ID")
     update_expense_parser.add_argument("-d", "--description", type=str, required=False, help="Expense description")
     update_expense_parser.add_argument("-a", "--amount", type=str, required=False, help="Expense amount")
+
+    delete_expense_parser = subparsers.add_parser("delete", help="Delete expense related arguments")
+    delete_expense_parser.add_argument("--id", type=int, required=True, help="Expense ID")
 
     args = parser.parse_args()
     
@@ -87,8 +104,7 @@ def main() -> None:
         valid, message = validate_amount(args.amount)
         if not valid:
             print(message)
-            sys.exit(-1)
-        add_expense(args.description, float(args.amount))
+        add_expense(args.description, args.amount)
     elif args.action == "update":
         if args.description or args.amount:
             valid, message = validate_amount(args.amount)
@@ -98,7 +114,8 @@ def main() -> None:
             update_expense(int(args.id), args.description, float(args.amount))
         else:
             print(f"Action UPDATE requires description or amount, or both.")
-    # handle_task(args)
+    elif args.action == "delete":
+        delete_expense(int(args.id))
 
 if __name__ == "__main__":
     main()
