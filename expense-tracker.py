@@ -3,6 +3,7 @@ import json
 import sys
 
 from pathlib import Path
+from datetime import datetime
 
 DATA = "expenses.json"
 
@@ -28,7 +29,15 @@ def save_data(expenses: list) -> bool:
 def add_expense(description: str, amount: float):
     expenses = load_data()
     new_id = len(expenses) + 1
-    expenses.append({"id": new_id, "description": description, "amount": amount})
+    expenses.append(
+        {
+            "id": new_id, 
+            "description": description, 
+            "amount": amount,
+            "created_at": datetime.now().isoformat(),
+            "updated_at": datetime.now().isoformat()
+        }
+    )
     succeeded = save_data(expenses)
 
     if succeeded:
@@ -46,9 +55,11 @@ def update_expense(id: int, description: str = None, amount: float = None):
     
     if description:
         expense_to_update["description"] = description
+        expense_to_update["updated_at"] = datetime.now().isoformat()
     
     if amount:
         expense_to_update["amount"] = amount
+        expense_to_update["updated_at"] = datetime.now().isoformat()
 
     save_data(expenses)
 
@@ -65,6 +76,14 @@ def delete_expense(id: int):
     save_data(expenses)
 
     print("Expense deleted successfully")
+
+def list_expenses():
+    expenses = load_data()
+
+    for expense in expenses:
+        dt = datetime.fromisoformat(expense['created_at'])
+        formatted_date = dt.strftime('%Y-%m-%d')
+        print(f"# {expense['id']}  {formatted_date}  {expense['description']}  {expense['amount']}")
 
 def is_number(s):
     try:
@@ -98,6 +117,8 @@ def main() -> None:
     delete_expense_parser = subparsers.add_parser("delete", help="Delete expense related arguments")
     delete_expense_parser.add_argument("--id", type=int, required=True, help="Expense ID")
 
+    subparsers.add_parser("list", help="Delete expense related arguments")
+
     args = parser.parse_args()
     
     if args.action == "add":
@@ -116,6 +137,8 @@ def main() -> None:
             print(f"Action UPDATE requires description or amount, or both.")
     elif args.action == "delete":
         delete_expense(int(args.id))
+    elif args.action == "list":
+        list_expenses()
 
 if __name__ == "__main__":
     main()
